@@ -223,22 +223,8 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100">
       {/* Header - Optimized for mobile */}
       <div className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 py-3 sm:py-6">
-          <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-4">
-            <Shield className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-600 flex-shrink-0" />
-            <h1 className="text-xl sm:text-3xl font-bold text-slate-900">SCL-90 症状自评量表</h1>
-          </div>
-          <p className="text-slate-600 text-xs sm:text-sm mb-3 sm:mb-4 leading-relaxed">
-            症状自评量表（SCL-90）由 Derogatis 在 1973 年编制，是全球公认的心理健康筛查工具。本系统采用中国常模标准，评估涵盖躯体化、焦虑、抑郁等 10 个核心心理维度。
-          </p>
-          
-          {/* Privacy Notice */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4 flex gap-2 sm:gap-3">
-            <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-            <div className="text-xs sm:text-sm text-blue-900">
-              <strong>隐私保护声明：</strong>本系统采集您的评估数据用于质量改进和学术研究。您的数据将被安全存储，仅有系统管理员可访问完整数据。所有个人身份信息严格保密，数据分析和发布时均采用匿名处理。您可随时要求查看或删除您的数据。
-            </div>
-          </div>
+        <div className="max-w-4xl mx-auto px-4 py-3 sm:py-4">
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900">SCL-90 症状自评量表</h1>
         </div>
       </div>
 
