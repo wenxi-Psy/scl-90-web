@@ -113,6 +113,7 @@ const questions: Question[] = [
   { id: 87, text: "从未感到和其他人很亲近" },
   { id: 88, text: "感到自己有罪" },
   { id: 89, text: "感到自己的脑子有毛病" },
+  { id: 90, text: "感到自己的脑子有毛病" },
 ];
 
 const factorDefs: Record<string, FactorDef> = {
@@ -131,20 +132,10 @@ const factorDefs: Record<string, FactorDef> = {
 const options = ["无", "轻", "中", "重", "极重"];
 
 export default function Home() {
-  const { user } = useAuth();
   const [scores, setScores] = useState<Record<number, number>>({});
   const [showResults, setShowResults] = useState(false);
-  const questionRefs = useRef<Record<number, HTMLDivElement | null>>({});
-
-  const handleAnswer = (questionId: number, value: number): void => {
-    setScores((prev) => ({
-      ...prev,
-      [questionId]: value,
-    }));
-  };
-
-  const saveMutation = trpc.assessment.save.useMutation();
   const [scrollY, setScrollY] = useState(0);
+  const questionRefs = useRef<Record<number, HTMLDivElement | null>>({});
 
   // Track scroll position to hide header content on mobile
   useEffect(() => {
@@ -154,6 +145,15 @@ export default function Home() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const handleAnswer = (questionId: number, value: number): void => {
+    setScores((prev) => ({
+      ...prev,
+      [questionId]: value,
+    }));
+  };
+
+  const saveMutation = trpc.assessment.save.useMutation();
 
   const handleSubmit = async (): Promise<void> => {
     const unanswered = questions.find((q) => !(q.id in scores));
@@ -171,7 +171,7 @@ export default function Home() {
       return;
     }
 
-    // Calculate results before saving
+    // Calculate results
     const total = Object.values(scores).reduce((a, b) => a + b, 0);
     const posCount = Object.values(scores).filter((v) => v >= 2).length;
     const avg = (total / questions.length).toFixed(2);
@@ -182,15 +182,11 @@ export default function Home() {
       factors[name] = sum / def.ids.length;
     }
 
-    // Save to database if user is logged in
-    if (user) {
+    // Save to database
+    if (saveMutation) {
       try {
-        const responseArray = Array(90).fill(0);
-        for (let i = 1; i <= 89; i++) {
-          responseArray[i - 1] = scores[i] || 0;
-        }
         await saveMutation.mutateAsync({
-          responses: responseArray,
+          responses: questions.map((q) => scores[q.id] || 0),
           totalScore: total,
           positiveItemCount: posCount,
           averageScore: avg,
@@ -232,31 +228,31 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100">
       {/* Header - Responsive sticky header */}
-      <div className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-sm transition-all duration-300">
-        {/* Full header - visible on desktop and at top of page on mobile */}
-        <div className={`max-w-4xl mx-auto px-4 overflow-hidden transition-all duration-300 ${
-          scrollY > 100 ? "sm:py-3 sm:max-h-20" : "sm:py-6 sm:max-h-none"
-        } py-3 max-h-none`}>
-          <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-4">
+      <div className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-sm">
+        {/* Title - always visible */}
+        <div className="max-w-4xl mx-auto px-4 py-3 sm:py-6">
+          <div className="flex items-center gap-2 sm:gap-3">
             <Shield className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-600 flex-shrink-0" />
             <h1 className="text-xl sm:text-3xl font-bold text-slate-900">SCL-90 症状自评量表</h1>
           </div>
-          <p className={`text-slate-600 text-xs sm:text-sm mb-3 sm:mb-4 leading-relaxed transition-all duration-300 ${
-            scrollY > 100 ? "hidden sm:block" : "block"
-          }`}>
-            症状自评量表（SCL-90）由 Derogatis 在 1973 年编制，是全球公认的心理健康筛查工具。本系统采用中国常模标准，评估涵盖躯体化、焦虑、抑郁等 10 个核心心理维度。
-          </p>
-          
-          {/* Privacy Notice - hidden on scroll on mobile */}
-          <div className={`bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4 flex gap-2 sm:gap-3 transition-all duration-300 ${
-            scrollY > 100 ? "hidden sm:flex" : "flex"
-          }`}>
-            <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-            <div className="text-xs sm:text-sm text-blue-900">
-              <strong>隐私保护声明：</strong>本系统采集您的评估数据用于质量改进和学术研究。您的数据将被安全存储，仅有系统管理员可访问完整数据。所有个人身份信息严格保密，数据分析和发布时均采用匿名处理。您可随时要求查看或删除您的数据。
+        </div>
+        
+        {/* Description and Privacy - hidden on scroll on mobile */}
+        {scrollY <= 100 && (
+          <div className="max-w-4xl mx-auto px-4 pb-4 sm:pb-6">
+            <p className="text-slate-600 text-xs sm:text-sm mb-3 sm:mb-4 leading-relaxed">
+              症状自评量表（SCL-90）由 Derogatis 在 1973 年编制，是全球公认的心理健康筛查工具。本系统采用中国常模标准，评估涵盖躯体化、焦虑、抑郁等 10 个核心心理维度。
+            </p>
+            
+            {/* Privacy Notice */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4 flex gap-2 sm:gap-3">
+              <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <div className="text-xs sm:text-sm text-blue-900">
+                <strong>隐私保护声明：</strong>您的评估数据将被安全存储，采用匿名方式处理，不会用于发布。仅有系统管理员可访问您的个人信息，所有数据严格保密。
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Main Content */}
@@ -298,7 +294,7 @@ export default function Home() {
                   ref={(el) => {
                     if (el) questionRefs.current[q.id] = el;
                   }}
-                  className={`p-3 sm:p-6 border-2 transition-all duration-200 ${
+                  className={`p-4 sm:p-6 border-2 transition-all duration-200 ${
                     scores[q.id]
                       ? "border-indigo-300 bg-indigo-50"
                       : "border-slate-200 bg-white hover:border-slate-300"
@@ -310,7 +306,7 @@ export default function Home() {
                     </h3>
                   </div>
 
-                  <div className="grid grid-cols-5 gap-1 sm:gap-2">
+                  <div className="grid grid-cols-5 gap-2">
                     {options.map((opt, idx) => (
                       <label key={idx} className="cursor-pointer">
                         <input
@@ -338,52 +334,46 @@ export default function Home() {
             </div>
 
             {/* Citation */}
-            <div className="text-center text-xs text-slate-500 mb-4 sm:mb-8">
+            <div className="text-center text-xs text-slate-500 mb-8">
               参考文献：金华,吴文源,张明园.中国正常人SCL-90评定结果的初步分析[J].中国神经精神疾病杂志, 1986(5):260-263.
             </div>
           </>
         ) : (
           /* Results View */
-          <div id="results" className="space-y-6 sm:space-y-8">
+          <div id="results" className="space-y-8">
             <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8 border border-slate-200">
-              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-6 sm:mb-8 text-center border-b-2 border-slate-200 pb-4">
+              <h2 className="text-2xl font-bold text-slate-900 mb-8 text-center border-b-2 border-slate-200 pb-4">
                 测评结果概览
               </h2>
 
               {/* Stats */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
-                <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg p-4 border border-slate-200">
+              <div className="grid grid-cols-3 gap-4 sm:gap-6 mb-8">
+                <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg p-4 sm:p-6 border border-slate-200">
                   <div className="text-xs sm:text-sm text-slate-600 mb-2">总分</div>
-                  <p className={`text-2xl sm:text-3xl font-bold ${results!.total >= 160 ? "text-red-600" : "text-indigo-600"}`}>
+                  <div className={`text-2xl sm:text-3xl font-bold ${results!.total >= 160 ? "text-red-600" : "text-indigo-600"}`}>
                     {results!.total}
-                  </p>
+                  </div>
                   <div className="text-xs text-slate-500 mt-2">参考值: &lt;160</div>
                 </div>
 
-                <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg p-4 border border-slate-200">
+                <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg p-4 sm:p-6 border border-slate-200">
                   <div className="text-xs sm:text-sm text-slate-600 mb-2">阳性项数</div>
-                  <p className={`text-2xl sm:text-3xl font-bold ${results!.posCount >= 43 ? "text-red-600" : "text-indigo-600"}`}>
+                  <div className={`text-2xl sm:text-3xl font-bold ${results!.posCount >= 43 ? "text-red-600" : "text-indigo-600"}`}>
                     {results!.posCount}
-                  </p>
+                  </div>
                   <div className="text-xs text-slate-500 mt-2">参考值: &lt;43</div>
                 </div>
 
-                <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg p-4 border border-slate-200">
+                <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg p-4 sm:p-6 border border-slate-200">
                   <div className="text-xs sm:text-sm text-slate-600 mb-2">总均分</div>
-                  <p className="text-2xl sm:text-3xl font-bold text-indigo-600">{results!.avg}</p>
+                  <div className="text-2xl sm:text-3xl font-bold text-indigo-600">{results!.avg}</div>
                   <div className="text-xs text-slate-500 mt-2">平均每项得分</div>
-                </div>
-
-                <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg p-4 border border-slate-200 col-span-2 sm:col-span-1">
-                  <div className="text-xs sm:text-sm text-slate-600 mb-2">完成度</div>
-                  <p className="text-2xl sm:text-3xl font-bold text-blue-600">100%</p>
-                  <div className="text-xs text-slate-500 mt-2">所有题目</div>
                 </div>
               </div>
 
               {/* Factor Analysis */}
-              <h3 className="text-base sm:text-lg font-semibold text-slate-900 mb-4">维度因子分解析 (≥2.0 提示需关注)</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8">
+              <h3 className="text-lg font-semibold text-slate-900 mb-4">维度因子分解析 (≥2.0 提示需关注)</h3>
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-8">
                 {Object.entries(factorDefs).map(([name, def]) => {
                   const score = results!.factors[name];
                   const isHigh = score >= 2.0;
@@ -412,8 +402,8 @@ export default function Home() {
               </div>
 
               {/* Analysis */}
-              <div className="bg-slate-50 rounded-lg p-4 sm:p-6 border border-slate-200 mb-6 sm:mb-8">
-                <h4 className="font-semibold text-slate-900 mb-4 text-sm sm:text-base">评分偏高维度解释</h4>
+              <div className="bg-slate-50 rounded-lg p-4 sm:p-6 border border-slate-200 mb-8">
+                <h4 className="font-semibold text-slate-900 mb-4">评分偏高维度解释</h4>
                 {Object.entries(factorDefs)
                   .filter(([name]) => results!.factors[name] >= 2.0)
                   .map(([name, def]) => (
@@ -423,7 +413,7 @@ export default function Home() {
                     </div>
                   ))}
                 {Object.entries(factorDefs).filter(([name]) => results!.factors[name] >= 2.0).length === 0 && (
-                  <div className="text-green-700 flex items-center gap-2 text-sm">
+                  <div className="text-green-700 flex items-center gap-2 text-sm sm:text-base">
                     <CheckCircle2 className="w-5 h-5" />
                     <span>各项指标均在参考范围内。</span>
                   </div>
@@ -451,7 +441,7 @@ export default function Home() {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
+            <div className="flex gap-3 sm:gap-4 justify-center flex-col sm:flex-row">
               <Button
                 onClick={() => {
                   setScores({});
@@ -467,7 +457,7 @@ export default function Home() {
                   const csv = generateCSV();
                   downloadCSV(csv);
                 }}
-                className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm sm:text-base"
+                className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-sm sm:text-base"
               >
                 导出 CSV 详情
               </Button>
@@ -476,16 +466,16 @@ export default function Home() {
         )}
       </div>
 
-      {/* Floating Action Bar - Optimized for mobile */}
+      {/* Floating Action Bar */}
       {!showResults && (
-        <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-slate-900 to-slate-800 border-t border-slate-700 p-3 sm:p-6">
-          <div className="max-w-4xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
+        <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-slate-900 to-slate-800 border-t border-slate-700 p-4 sm:p-6">
+          <div className="max-w-4xl mx-auto flex justify-between items-center flex-col sm:flex-row gap-3 sm:gap-0">
             <div className="text-white text-xs sm:text-sm">
               已完成 <span className="font-bold text-indigo-400">{Object.keys(scores).length}</span> / {questions.length} 题
             </div>
             <Button
               onClick={handleSubmit}
-              className="w-full sm:w-auto px-6 sm:px-8 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm sm:text-base"
+              className="px-6 sm:px-8 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold w-full sm:w-auto text-sm sm:text-base"
             >
               生成报告
             </Button>
