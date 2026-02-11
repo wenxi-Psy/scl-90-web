@@ -45,8 +45,6 @@
 - [x] Restrict public access to assessment page only (hide analytics from non-admin)
 - [x] Update privacy statement to reflect actual data collection practices
 - [ ] Verify data persistence in database after submission
-- [x] Remove privacy protection statement from header
-- [x] Simplify header to show only SCL-90 title
 
 ## Phase 6: Research Features (Planned)
 - [ ] Implement anonymous assessment mode
