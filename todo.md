@@ -45,6 +45,7 @@
 - [x] Restrict public access to assessment page only (hide analytics from non-admin)
 - [x] Update privacy statement to reflect actual data collection practices
 - [ ] Verify data persistence in database after submission
+- [x] Implement responsive sticky header that collapses on scroll (mobile only)
 
 ## Phase 6: Research Features (Planned)
 - [ ] Implement anonymous assessment mode
