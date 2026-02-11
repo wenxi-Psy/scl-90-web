@@ -2,6 +2,8 @@ import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Shield, AlertCircle, CheckCircle2 } from "lucide-react";
+import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 /**
  * Design Philosophy: Modern Medical Aesthetic
@@ -129,6 +131,7 @@ const factorDefs: Record<string, FactorDef> = {
 const options = ["无", "轻", "中", "重", "极重"];
 
 export default function Home() {
+  const { user } = useAuth();
   const [scores, setScores] = useState<Record<number, number>>({});
   const [showResults, setShowResults] = useState(false);
 
