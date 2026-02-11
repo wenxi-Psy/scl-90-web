@@ -34,7 +34,7 @@
 - [x] Implement responsive design
 
 ## Phase 5: Frontend Integration (In Progress)
-- [ ] Integrate assessment.save into Home.tsx to persist results
+- [x] Integrate assessment.save into Home.tsx to persist results to database
 - [ ] Add loading states and error handling for API calls
 - [ ] Implement assessment history view for logged-in users
 - [ ] Add user profile/account settings page
@@ -42,6 +42,9 @@
 - [x] Smart jump to first unanswered question on submit
 - [x] Reduce fixed header/footer height on mobile
 - [x] Fix option button sizing consistency on mobile
+- [x] Restrict public access to assessment page only (hide analytics from non-admin)
+- [x] Update privacy statement to reflect actual data collection practices
+- [ ] Verify data persistence in database after submission
 
 ## Phase 6: Research Features (Planned)
 - [ ] Implement anonymous assessment mode

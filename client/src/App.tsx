@@ -7,8 +7,12 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import Analytics from "./pages/Analytics";
 import { BarChart3 } from "lucide-react";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 function Router() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
+
   return (
     <>
       {/* Navigation Bar */}
@@ -21,17 +25,21 @@ function Router() {
             <Link href="/" className="text-slate-600 hover:text-slate-900 text-sm font-medium transition-colors">
               评估
             </Link>
-            <Link href="/analytics" className="flex items-center gap-1 text-slate-600 hover:text-slate-900 text-sm font-medium transition-colors">
-              <BarChart3 className="w-4 h-4" />
-              分析
-            </Link>
+            {/* Only show analytics link to admin users */}
+            {isAdmin && (
+              <Link href="/analytics" className="flex items-center gap-1 text-slate-600 hover:text-slate-900 text-sm font-medium transition-colors">
+                <BarChart3 className="w-4 h-4" />
+                分析
+              </Link>
+            )}
           </div>
         </div>
       </nav>
 
       <Switch>
         <Route path="/" component={Home} />
-        <Route path="/analytics" component={Analytics} />
+        {/* Analytics route only accessible to admin */}
+        {isAdmin && <Route path="/analytics" component={Analytics} />}
         <Route path="/404" component={NotFound} />
         {/* Final fallback route */}
         <Route component={NotFound} />

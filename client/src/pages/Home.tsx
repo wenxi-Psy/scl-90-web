@@ -143,7 +143,9 @@ export default function Home() {
     }));
   };
 
-  const handleSubmit = (): void => {
+  const saveMutation = trpc.assessment.save.useMutation();
+
+  const handleSubmit = async (): Promise<void> => {
     const unanswered = questions.find((q) => !(q.id in scores));
     if (unanswered) {
       // Smart jump to first unanswered question
@@ -158,11 +160,44 @@ export default function Home() {
       }
       return;
     }
+
+    // Calculate results before saving
+    const total = Object.values(scores).reduce((a, b) => a + b, 0);
+    const posCount = Object.values(scores).filter((v) => v >= 2).length;
+    const avg = (total / questions.length).toFixed(2);
+
+    const factors: Record<string, number> = {};
+    for (const [name, def] of Object.entries(factorDefs)) {
+      const sum = def.ids.reduce((a, id) => a + (scores[id] || 0), 0);
+      factors[name] = sum / def.ids.length;
+    }
+
+    // Save to database if user is logged in
+    if (user) {
+      try {
+        const responseArray = Array(90).fill(0);
+        for (let i = 1; i <= 89; i++) {
+          responseArray[i - 1] = scores[i] || 0;
+        }
+        await saveMutation.mutateAsync({
+          responses: responseArray,
+          totalScore: total,
+          positiveItemCount: posCount,
+          averageScore: avg,
+          factorScores: factors,
+          isAnonymous: false,
+        });
+      } catch (error) {
+        console.error("Failed to save assessment:", error);
+        // Still show results even if save fails
+      }
+    }
+
     setShowResults(true);
     setTimeout(() => {
       document.getElementById("results")?.scrollIntoView({ behavior: "smooth" });
     }, 100);
-  };
+  };;
 
   const results = useMemo(() => {
     if (!showResults) return null;
@@ -201,7 +236,7 @@ export default function Home() {
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4 flex gap-2 sm:gap-3">
             <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0 mt-0.5" />
             <div className="text-xs sm:text-sm text-blue-900">
-              <strong>隐私保护声明：</strong>本程序为纯前端架构，您的所有答题数据均<strong>仅在您的浏览器本地</strong>进行计算，系统不会上传、存储或收集您的任何个人信息与测评结果。
+              <strong>隐私保护声明：</strong>本系统采集您的评估数据用于质量改进和学术研究。您的数据将被安全存储，仅有系统管理员可访问完整数据。所有个人身份信息严格保密，数据分析和发布时均采用匿名处理。您可随时要求查看或删除您的数据。
             </div>
           </div>
         </div>
