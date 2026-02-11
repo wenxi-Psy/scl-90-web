@@ -2,8 +2,6 @@ import { useState, useMemo, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Shield, AlertCircle, CheckCircle2 } from "lucide-react";
-import { trpc } from "@/lib/trpc";
-import { useAuth } from "@/_core/hooks/useAuth";
 
 /**
  * Design Philosophy: Modern Medical Aesthetic
@@ -153,9 +151,7 @@ export default function Home() {
     }));
   };
 
-  const saveMutation = trpc.assessment.save.useMutation();
-
-  const handleSubmit = async (): Promise<void> => {
+  const handleSubmit = (): void => {
     const unanswered = questions.find((q) => !(q.id in scores));
     if (unanswered) {
       // Smart jump to first unanswered question
@@ -182,23 +178,7 @@ export default function Home() {
       factors[name] = sum / def.ids.length;
     }
 
-    // Save to database
-    if (saveMutation) {
-      try {
-        await saveMutation.mutateAsync({
-          responses: questions.map((q) => scores[q.id] || 0),
-          totalScore: total,
-          positiveItemCount: posCount,
-          averageScore: avg,
-          factorScores: factors,
-          isAnonymous: false,
-        });
-      } catch (error) {
-        console.error("Failed to save assessment:", error);
-        // Still show results even if save fails
-      }
-    }
-
+    // Show results immediately without requiring login or saving
     setShowResults(true);
     setTimeout(() => {
       document.getElementById("results")?.scrollIntoView({ behavior: "smooth" });
