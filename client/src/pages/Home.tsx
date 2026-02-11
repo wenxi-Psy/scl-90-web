@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Shield, AlertCircle, CheckCircle2 } from "lucide-react";
@@ -134,6 +134,7 @@ export default function Home() {
   const { user } = useAuth();
   const [scores, setScores] = useState<Record<number, number>>({});
   const [showResults, setShowResults] = useState(false);
+  const questionRefs = useRef<Record<number, HTMLDivElement | null>>({});
 
   const handleAnswer = (questionId: number, value: number): void => {
     setScores((prev) => ({
@@ -143,9 +144,18 @@ export default function Home() {
   };
 
   const handleSubmit = (): void => {
-    const unanswered = questions.filter((q) => !(q.id in scores));
-    if (unanswered.length > 0) {
-      alert(`请完成所有题目再生成报告，还有 ${unanswered.length} 题未答`);
+    const unanswered = questions.find((q) => !(q.id in scores));
+    if (unanswered) {
+      // Smart jump to first unanswered question
+      const element = questionRefs.current[unanswered.id];
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
+        // Highlight the unanswered question
+        element.classList.add("ring-2", "ring-red-500");
+        setTimeout(() => {
+          element.classList.remove("ring-2", "ring-red-500");
+        }, 3000);
+      }
       return;
     }
     setShowResults(true);
@@ -176,21 +186,21 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100">
-      {/* Header */}
+      {/* Header - Optimized for mobile */}
       <div className="sticky top-0 z-40 bg-white border-b border-slate-200 shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 py-6">
-          <div className="flex items-center gap-3 mb-4">
-            <Shield className="w-8 h-8 text-indigo-600" />
-            <h1 className="text-3xl font-bold text-slate-900">SCL-90 症状自评量表</h1>
+        <div className="max-w-4xl mx-auto px-4 py-3 sm:py-6">
+          <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-4">
+            <Shield className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-600 flex-shrink-0" />
+            <h1 className="text-xl sm:text-3xl font-bold text-slate-900">SCL-90 症状自评量表</h1>
           </div>
-          <p className="text-slate-600 text-sm mb-4">
+          <p className="text-slate-600 text-xs sm:text-sm mb-3 sm:mb-4 leading-relaxed">
             症状自评量表（SCL-90）由 Derogatis 在 1973 年编制，是全球公认的心理健康筛查工具。本系统采用中国常模标准，评估涵盖躯体化、焦虑、抑郁等 10 个核心心理维度。
           </p>
           
           {/* Privacy Notice */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex gap-3">
-            <Shield className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-blue-900">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4 flex gap-2 sm:gap-3">
+            <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+            <div className="text-xs sm:text-sm text-blue-900">
               <strong>隐私保护声明：</strong>本程序为纯前端架构，您的所有答题数据均<strong>仅在您的浏览器本地</strong>进行计算，系统不会上传、存储或收集您的任何个人信息与测评结果。
             </div>
           </div>
@@ -198,16 +208,16 @@ export default function Home() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto px-4 py-4 sm:py-8">
         {!showResults ? (
           <>
             {/* Instructions */}
-            <Card className="mb-8 bg-slate-50 border-slate-200 p-6">
+            <Card className="mb-6 sm:mb-8 bg-slate-50 border-slate-200 p-4 sm:p-6">
               <div className="flex gap-3">
                 <AlertCircle className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" />
                 <div>
-                  <h3 className="font-semibold text-slate-900 mb-2">测评说明</h3>
-                  <p className="text-slate-700 text-sm">
+                  <h3 className="font-semibold text-slate-900 mb-2 text-sm sm:text-base">测评说明</h3>
+                  <p className="text-slate-700 text-xs sm:text-sm">
                     请根据您<strong>最近一周</strong>的真实感受答题。请按第一直觉勾选最符合的一项。
                   </p>
                 </div>
@@ -215,10 +225,10 @@ export default function Home() {
             </Card>
 
             {/* Progress Bar */}
-            <div className="mb-8">
+            <div className="mb-6 sm:mb-8">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium text-slate-700">答题进度</span>
-                <span className="text-sm font-semibold text-indigo-600">{progress}%</span>
+                <span className="text-xs sm:text-sm font-medium text-slate-700">答题进度</span>
+                <span className="text-xs sm:text-sm font-semibold text-indigo-600">{progress}%</span>
               </div>
               <div className="w-full bg-slate-200 rounded-full h-2">
                 <div
@@ -229,23 +239,26 @@ export default function Home() {
             </div>
 
             {/* Questions */}
-            <div className="space-y-4 mb-32">
+            <div className="space-y-3 sm:space-y-4 mb-24 sm:mb-32">
               {questions.map((q) => (
                 <Card
                   key={q.id}
-                  className={`p-6 border-2 transition-all duration-200 ${
+                  ref={(el) => {
+                    if (el) questionRefs.current[q.id] = el;
+                  }}
+                  className={`p-3 sm:p-6 border-2 transition-all duration-200 ${
                     scores[q.id]
                       ? "border-indigo-300 bg-indigo-50"
                       : "border-slate-200 bg-white hover:border-slate-300"
                   }`}
                 >
-                  <div className="mb-4">
-                    <h3 className="text-slate-900 font-medium">
+                  <div className="mb-3 sm:mb-4">
+                    <h3 className="text-slate-900 font-medium text-sm sm:text-base">
                       <span className="text-indigo-600 font-bold">{q.id}.</span> {q.text}
                     </h3>
                   </div>
 
-                  <div className="grid grid-cols-5 gap-2">
+                  <div className="grid grid-cols-5 gap-1 sm:gap-2">
                     {options.map((opt, idx) => (
                       <label key={idx} className="cursor-pointer">
                         <input
@@ -257,7 +270,7 @@ export default function Home() {
                           className="sr-only"
                         />
                         <div
-                          className={`p-3 rounded-lg text-center text-sm font-medium transition-all duration-200 ${
+                          className={`p-2 sm:p-3 rounded-lg text-center text-xs sm:text-sm font-medium transition-all duration-200 whitespace-nowrap ${
                             scores[q.id] === idx + 1
                               ? "bg-indigo-600 text-white border-2 border-indigo-600"
                               : "bg-slate-100 text-slate-700 border-2 border-transparent hover:bg-slate-200"
@@ -273,60 +286,66 @@ export default function Home() {
             </div>
 
             {/* Citation */}
-            <div className="text-center text-xs text-slate-500 mb-8">
+            <div className="text-center text-xs text-slate-500 mb-4 sm:mb-8">
               参考文献：金华,吴文源,张明园.中国正常人SCL-90评定结果的初步分析[J].中国神经精神疾病杂志, 1986(5):260-263.
             </div>
           </>
         ) : (
           /* Results View */
-          <div id="results" className="space-y-8">
-            <div className="bg-white rounded-xl shadow-lg p-8 border border-slate-200">
-              <h2 className="text-2xl font-bold text-slate-900 mb-8 text-center border-b-2 border-slate-200 pb-4">
+          <div id="results" className="space-y-6 sm:space-y-8">
+            <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8 border border-slate-200">
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-6 sm:mb-8 text-center border-b-2 border-slate-200 pb-4">
                 测评结果概览
               </h2>
 
               {/* Stats */}
-              <div className="grid grid-cols-3 gap-6 mb-8">
-                <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg p-6 border border-slate-200">
-                  <div className="text-sm text-slate-600 mb-2">总分</div>
-                  <div className={`text-3xl font-bold ${results!.total >= 160 ? "text-red-600" : "text-indigo-600"}`}>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
+                <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg p-4 border border-slate-200">
+                  <div className="text-xs sm:text-sm text-slate-600 mb-2">总分</div>
+                  <p className={`text-2xl sm:text-3xl font-bold ${results!.total >= 160 ? "text-red-600" : "text-indigo-600"}`}>
                     {results!.total}
-                  </div>
+                  </p>
                   <div className="text-xs text-slate-500 mt-2">参考值: &lt;160</div>
                 </div>
 
-                <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg p-6 border border-slate-200">
-                  <div className="text-sm text-slate-600 mb-2">阳性项数</div>
-                  <div className={`text-3xl font-bold ${results!.posCount >= 43 ? "text-red-600" : "text-indigo-600"}`}>
+                <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg p-4 border border-slate-200">
+                  <div className="text-xs sm:text-sm text-slate-600 mb-2">阳性项数</div>
+                  <p className={`text-2xl sm:text-3xl font-bold ${results!.posCount >= 43 ? "text-red-600" : "text-indigo-600"}`}>
                     {results!.posCount}
-                  </div>
+                  </p>
                   <div className="text-xs text-slate-500 mt-2">参考值: &lt;43</div>
                 </div>
 
-                <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg p-6 border border-slate-200">
-                  <div className="text-sm text-slate-600 mb-2">总均分</div>
-                  <div className="text-3xl font-bold text-indigo-600">{results!.avg}</div>
+                <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg p-4 border border-slate-200">
+                  <div className="text-xs sm:text-sm text-slate-600 mb-2">总均分</div>
+                  <p className="text-2xl sm:text-3xl font-bold text-indigo-600">{results!.avg}</p>
                   <div className="text-xs text-slate-500 mt-2">平均每项得分</div>
+                </div>
+
+                <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg p-4 border border-slate-200 col-span-2 sm:col-span-1">
+                  <div className="text-xs sm:text-sm text-slate-600 mb-2">完成度</div>
+                  <p className="text-2xl sm:text-3xl font-bold text-blue-600">100%</p>
+                  <div className="text-xs text-slate-500 mt-2">所有题目</div>
                 </div>
               </div>
 
               {/* Factor Analysis */}
-              <h3 className="text-lg font-semibold text-slate-900 mb-4">维度因子分解析 (≥2.0 提示需关注)</h3>
-              <div className="grid grid-cols-2 gap-4 mb-8">
+              <h3 className="text-base sm:text-lg font-semibold text-slate-900 mb-4">维度因子分解析 (≥2.0 提示需关注)</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8">
                 {Object.entries(factorDefs).map(([name, def]) => {
                   const score = results!.factors[name];
                   const isHigh = score >= 2.0;
                   return (
                     <div
                       key={name}
-                      className={`p-4 rounded-lg border-2 transition-all ${
+                      className={`p-3 sm:p-4 rounded-lg border-2 transition-all ${
                         isHigh
                           ? "bg-red-50 border-red-200"
                           : "bg-slate-50 border-slate-200"
                       }`}
                     >
-                      <div className="font-semibold text-slate-900 mb-1">{name}</div>
-                      <div className={`text-2xl font-bold ${isHigh ? "text-red-600" : "text-indigo-600"}`}>
+                      <div className="font-semibold text-slate-900 mb-1 text-sm sm:text-base">{name}</div>
+                      <div className={`text-xl sm:text-2xl font-bold ${isHigh ? "text-red-600" : "text-indigo-600"}`}>
                         {score.toFixed(2)}
                       </div>
                       {isHigh && (
@@ -341,18 +360,18 @@ export default function Home() {
               </div>
 
               {/* Analysis */}
-              <div className="bg-slate-50 rounded-lg p-6 border border-slate-200 mb-8">
-                <h4 className="font-semibold text-slate-900 mb-4">评分偏高维度解释</h4>
+              <div className="bg-slate-50 rounded-lg p-4 sm:p-6 border border-slate-200 mb-6 sm:mb-8">
+                <h4 className="font-semibold text-slate-900 mb-4 text-sm sm:text-base">评分偏高维度解释</h4>
                 {Object.entries(factorDefs)
                   .filter(([name]) => results!.factors[name] >= 2.0)
                   .map(([name, def]) => (
                     <div key={name} className="mb-4 pb-4 border-b border-slate-200 last:border-b-0 last:mb-0 last:pb-0">
-                      <div className="font-semibold text-slate-900 mb-2 text-red-600">{name}</div>
-                      <p className="text-slate-700 text-sm">{def.desc}</p>
+                      <div className="font-semibold text-slate-900 mb-2 text-red-600 text-sm sm:text-base">{name}</div>
+                      <p className="text-slate-700 text-xs sm:text-sm">{def.desc}</p>
                     </div>
                   ))}
                 {Object.entries(factorDefs).filter(([name]) => results!.factors[name] >= 2.0).length === 0 && (
-                  <div className="text-green-700 flex items-center gap-2">
+                  <div className="text-green-700 flex items-center gap-2 text-sm">
                     <CheckCircle2 className="w-5 h-5" />
                     <span>各项指标均在参考范围内。</span>
                   </div>
@@ -360,9 +379,9 @@ export default function Home() {
               </div>
 
               {/* Disclaimer */}
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-                <h4 className="font-semibold text-slate-900 mb-3">专业声明与局限性说明</h4>
-                <ul className="text-sm text-slate-700 space-y-2">
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 sm:p-6">
+                <h4 className="font-semibold text-slate-900 mb-3 text-sm sm:text-base">专业声明与局限性说明</h4>
+                <ul className="text-xs sm:text-sm text-slate-700 space-y-2">
                   <li>
                     <strong>1. 主观自评工具：</strong>本量表为主观自评工具，结果反映的是受试者近一周内的主观感受，具有较强的时效性。
                   </li>
@@ -380,14 +399,14 @@ export default function Home() {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
               <Button
                 onClick={() => {
                   setScores({});
                   setShowResults(false);
                 }}
                 variant="outline"
-                className="px-6 py-2"
+                className="px-6 py-2 text-sm sm:text-base"
               >
                 重新评估
               </Button>
@@ -396,7 +415,7 @@ export default function Home() {
                   const csv = generateCSV();
                   downloadCSV(csv);
                 }}
-                className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700"
+                className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm sm:text-base"
               >
                 导出 CSV 详情
               </Button>
@@ -405,16 +424,16 @@ export default function Home() {
         )}
       </div>
 
-      {/* Floating Action Bar */}
+      {/* Floating Action Bar - Optimized for mobile */}
       {!showResults && (
-        <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-slate-900 to-slate-800 border-t border-slate-700 p-6">
-          <div className="max-w-4xl mx-auto flex justify-between items-center">
-            <div className="text-white text-sm">
+        <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-slate-900 to-slate-800 border-t border-slate-700 p-3 sm:p-6">
+          <div className="max-w-4xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
+            <div className="text-white text-xs sm:text-sm">
               已完成 <span className="font-bold text-indigo-400">{Object.keys(scores).length}</span> / {questions.length} 题
             </div>
             <Button
               onClick={handleSubmit}
-              className="px-8 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold"
+              className="w-full sm:w-auto px-6 sm:px-8 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm sm:text-base"
             >
               生成报告
             </Button>

@@ -39,6 +39,9 @@
 - [ ] Implement assessment history view for logged-in users
 - [ ] Add user profile/account settings page
 - [ ] Create data export with detailed statistics
+- [x] Smart jump to first unanswered question on submit
+- [x] Reduce fixed header/footer height on mobile
+- [x] Fix option button sizing consistency on mobile
 
 ## Phase 6: Research Features (Planned)
 - [ ] Implement anonymous assessment mode
